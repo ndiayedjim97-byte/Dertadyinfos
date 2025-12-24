@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | DERTADY INFOS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+        .admin-panel { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { color: #002e5b; border-bottom: 2px solid #00853f; padding-bottom: 10px; }
+        label { display: block; margin-top: 15px; font-weight: bold; }
+        input, textarea, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background: #00853f; color: white; border: none; padding: 15px; width: 100%; margin-top: 20px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #005a2b; }
+        .success { color: green; font-weight: bold; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="admin-panel">
+    <h2>Publier un article - DERTADY INFOS</h2>
+    <form id="postForm">
+        <label>Titre de l'article</label>
+        <input type="text" id="titre" required placeholder="Ex: Grand combat de lutte à Dakar">
+
+        <label>Catégorie</label>
+        <select id="categorie">
+            <option value="Politique">Politique</option>
+            <option value="Société">Société</option>
+            <option value="Lutte">Lutte</option>
+            <option value="Économie">Économie</option>
+            <option value="International">International</option>
+        </select>
+
+        <label>URL de l'image (Lien)</label>
+        <input type="url" id="image_url" required placeholder="https://image.com/photo.jpg">
+
+        <label>Contenu de l'article</label>
+        <textarea id="contenu" rows="10" required placeholder="Écrivez votre article ici..."></textarea>
+
+        <label>
+            <input type="checkbox" id="is_breaking" style="width: auto;"> Marquer comme "FLASH" (Alerte rouge)
+        </label>
+
+        <button type="submit" id="btnSubmit">Publier l'article</button>
+        <p id="msg" class="success">✅ Article publié avec succès !</p>
+    </form>
+</div>
+
+<script>
+    // --- CONFIGURATION ---
+    const SUPABASE_URL = "https://zeymlbtoxajpqjvvcjea.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_0t3CUYcPymDjsc6jmbii2Q_p6nSmYsG";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // --- VOTRE MOT DE PASSE ---
+    const MOT_DE_PASSE_ADMIN = "DERTADY2025"; // Changez ce mot de passe !
+
+    const form = document.getElementById('postForm');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // 1. Demander le mot de passe
+        const promptPass = prompt("Veuillez entrer le code secret pour publier :");
+
+        if (promptPass !== MOT_DE_PASSE_ADMIN) {
+            alert("❌ Mot de passe incorrect. Accès refusé.");
+            return;
+        }
+
+        const btn = document.getElementById('btnSubmit');
+        btn.innerText = "Envoi en cours...";
+        btn.disabled = true;
+
+        // 2. Préparer les données
+        const data = {
+            titre: document.getElementById('titre').value,
+            categorie: document.getElementById('categorie').value,
+            image_url: document.getElementById('image_url').value,
+            contenu: document.getElementById('contenu').value,
+            is_breaking: document.getElementById('is_breaking').checked
+        };
+
+        // 3. Envoyer à Supabase
+        const { error } = await _supabase.from('articles').insert([data]);
+
+        if (error) {
+            alert("Erreur: " + error.message);
+            btn.disabled = false;
+            btn.innerText = "Publier l'article";
+        } else {
+            document.getElementById('msg').style.display = 'block';
+            form.reset();
+            btn.disabled = false;
+            btn.innerText = "Publier l'article";
+            setTimeout(() => { document.getElementById('msg').style.display = 'none'; }, 3000);
+        }
+    });
+</script>
+</body>
+</html>
