@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DERTADY INFOS | Lecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --vert: #00853f; --rouge: #e31b23; --bleu: #002e5b; --noir: #1a1a1a; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; background: #f4f4f4; color: var(--noir); line-height: 1.6; }
+        
+        header { background: white; border-bottom: 5px solid var(--vert); padding: 20px 5%; text-align: center; }
+        .logo { font-size: 30px; font-weight: 900; color: var(--bleu); text-decoration: none; }
+        .logo span { color: var(--vert); }
+
+        .container { max-width: 800px; margin: 30px auto; background: white; padding: 40px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-radius: 8px; }
+        .tag { background: var(--vert); color: white; padding: 5px 15px; font-size: 14px; text-transform: uppercase; display: inline-block; margin-bottom: 20px; border-radius: 3px; }
+        h1 { font-size: 42px; line-height: 1.1; margin-bottom: 20px; color: var(--bleu); }
+        .meta { color: #666; font-size: 14px; margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        img { width: 100%; height: auto; border-radius: 4px; margin-bottom: 30px; }
+        .content { font-size: 19px; white-space: pre-wrap; color: #333; }
+        
+        /* STYLE DU BOUTON WHATSAPP */
+        .share-section { margin-top: 40px; padding-top: 20px; border-top: 2px solid #eee; text-align: center; }
+        .share-title { font-weight: bold; margin-bottom: 15px; color: #555; }
+        
+        .whatsapp-btn { 
+            display: inline-flex; 
+            align-items: center; 
+            background-color: #25D366; 
+            color: white; 
+            padding: 12px 25px; 
+            text-decoration: none; 
+            border-radius: 50px; 
+            font-weight: bold; 
+            font-size: 16px; 
+            transition: 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .whatsapp-btn:hover { background-color: #128C7E; transform: translateY(-2px); }
+        .whatsapp-btn img { width: 20px; height: 20px; margin-right: 10px; margin-bottom: 0; filter: brightness(0) invert(1); }
+
+        .back-btn { display: inline-block; margin-top: 40px; text-decoration: none; color: var(--vert); font-weight: bold; border: 2px solid var(--vert); padding: 10px 20px; border-radius: 5px; transition: 0.3s; }
+        .back-btn:hover { background: var(--vert); color: white; }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 28px; }
+            .container { padding: 20px; margin: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="logo">DERTADY<span>INFOS</span></a>
+    </header>
+
+    <main class="container">
+        <div id="article-detail">
+            <p>Chargement de l'article en cours...</p>
+        </div>
+        <a href="index.html" class="back-btn">← Retour à l'accueil</a>
+    </main>
+
+    <script>
+        const SUPABASE_URL = "https://zeymlbtoxajpqjvvcjea.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_0t3CUYcPymDjsc6jmbii2Q_p6nSmYsG";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const articleId = urlParams.get('id');
+
+        async function chargerArticleComplet() {
+            if (!articleId) {
+                document.getElementById('article-detail').innerHTML = "<h1>Article non trouvé.</h1>";
+                return;
+            }
+
+            const { data: article, error } = await _supabase
+                .from('articles')
+                .select('*')
+                .eq('id', articleId)
+                .single();
+
+            if (error || !article) {
+                document.getElementById('article-detail').innerHTML = "<h1>Oups ! Cet article n'existe pas ou a été supprimé.</h1>";
+                return;
+            }
+
+            const dateAction = new Date(article.created_at).toLocaleDateString('fr-FR', {
+                day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+
+            // Préparation du message WhatsApp
+            const textePartage = encodeURIComponent(`*DERTADY INFOS* 🇸🇳\n\n*${article.titre}*\n\nLire l'article complet ici : `);
+            const lienPartage = encodeURIComponent(window.location.href);
+
+            document.getElementById('article-detail').innerHTML = `
+                <span class="tag">${article.categorie}</span>
+                <h1>${article.titre}</h1>
+                <div class="meta">Publié le ${dateAction} | Par Dertady Infos</div>
+                <img src="${article.image_url}" alt="${article.titre}">
+                <div class="content">${article.contenu}</div>
+                
+                <div class="share-section">
+                    <p class="share-title">PARTAGER SUR WHATSAPP</p>
+                    <a href="https://wa.me/?text=${textePartage}${lienPartage}" target="_blank" class="whatsapp-btn">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WA">
+                        Envoyer à vos contacts
+                    </a>
+                </div>
+            `;
+            
+            document.title = article.titre + " | DERTADY INFOS";
+        }
+
+        chargerArticleComplet();
+    </script>
+</body>
+</html>
