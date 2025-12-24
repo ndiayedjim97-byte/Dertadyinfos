@@ -67,7 +67,10 @@
             font-weight: bold;
             text-transform: uppercase;
             font-size: 14px;
+            cursor: pointer;
         }
+
+        .nav-links a:hover { color: var(--vert); }
 
         /* --- ALERTE --- */
         .breaking {
@@ -175,13 +178,14 @@
             <span>Dakar, Sénégal</span>
         </div>
         <nav class="navbar">
-            <a href="#" class="logo">DERTADY<span>INFOS</span></a>
+            <a href="#" class="logo" onclick="chargerContenu()">DERTADY<span>INFOS</span></a>
             <ul class="nav-links">
-                <li><a href="#">Politique</a></li>
-                <li><a href="#">Société</a></li>
-                <li><a href="#">Lutte</a></li>
-                <li><a href="#">Économie</a></li>
-                <li><a href="#">International</a></li>
+                <li><a onclick="chargerContenu()">Accueil</a></li>
+                <li><a onclick="filtrerParCategorie('Politique')">Politique</a></li>
+                <li><a onclick="filtrerParCategorie('Société')">Société</a></li>
+                <li><a onclick="filtrerParCategorie('Lutte')">Lutte</a></li>
+                <li><a onclick="filtrerParCategorie('Économie')">Économie</a></li>
+                <li><a onclick="filtrerParCategorie('International')">International</a></li>
             </ul>
         </nav>
         <div class="breaking" id="flash-alerte">
@@ -196,8 +200,8 @@
                 <img id="img-une" src="https://via.placeholder.com/800x400?text=Dertady+Infos" alt="Une">
                 <div class="main-news-content">
                     <span class="tag" id="tag-une">Sénégal</span>
-                    <h1 id="titre-une">Connectez votre base Supabase</h1>
-                    <p id="texte-une">Vos articles s'afficheront ici automatiquement après avoir configuré vos clés API en bas du code.</p>
+                    <h1 id="titre-une">Chargement...</h1>
+                    <p id="texte-une">Veuillez patienter pendant la récupération des articles.</p>
                 </div>
             </article>
 
@@ -222,66 +226,73 @@
     </footer>
 
     <script>
-        // --- CONFIGURATION SUPABASE ---
-        // Remplacez par vos propres clés Supabase
-        const SUPABASE_URL = "https://zeymlbtoxajpqjvvcjea.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_0t3CUYcPymDjsc6jmbii2Q_p6nSmYsG";
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const SUPABASE_URL = "https://zeymlbtoxajpqjvvcjea.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_0t3CUYcPymDjsc6jmbii2Q_p6nSmYsG";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Date du jour dynamique
-        document.getElementById('date-du-jour').innerText = new Date().toLocaleDateString('fr-FR', {
-            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-        });
+    document.getElementById('date-du-jour').innerText = new Date().toLocaleDateString('fr-FR', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
 
-        async function chargerContenu() {
-            // On récupère les articles dans la table 'articles'
-            const { data: articles, error } = await _supabase
-                .from('articles')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error("Erreur de récupération:", error);
-                return;
-            }
-
-            if (articles && articles.length > 0) {
-                // 1. On remplit la UNE
-                const une = articles[0];
-                document.getElementById('titre-une').innerText = une.titre;
-                document.getElementById('texte-une').innerText = une.contenu.substring(0, 180) + "...";
-                document.getElementById('tag-une').innerText = une.categorie;
-                document.getElementById('img-une').src = une.image_url;
-                document.getElementById('flash-alerte').innerText = "FLASH : " + une.titre;
-
-                // 2. On remplit la GRILLE (les 2 articles suivants)
-                const grille = document.getElementById('grille-secondaire');
-                grille.innerHTML = ""; // On nettoie
-                articles.slice(1, 3).forEach(art => {
-                    grille.innerHTML += `
-                        <div class="news-card">
-                            <img src="${art.image_url}" alt="news">
-                            <h3>${art.titre}</h3>
-                        </div>
-                    `;
-                });
-
-                // 3. On remplit le FIL INFO (tous les articles)
-                const fil = document.getElementById('fil-info');
-                fil.innerHTML = "";
-                articles.forEach(art => {
-                    const heure = new Date(art.created_at).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
-                    fil.innerHTML += `
-                        <div class="feed-item">
-                            <span class="feed-time">${heure}</span>
-                            <p>${art.titre}</p>
-                        </div>
-                    `;
-                });
-            }
+    function afficherArticles(articles) {
+        const une = articles[0];
+        const grille = document.getElementById('grille-secondaire');
+        
+        if (une) {
+            // On ajoute un lien sur le titre de la UNE
+            document.getElementById('titre-une').innerHTML = `<a href="article.html?id=${une.id}" style="text-decoration:none; color:inherit;">${une.titre}</a>`;
+            document.getElementById('texte-une').innerText = une.contenu.substring(0, 180) + "...";
+            document.getElementById('tag-une').innerText = une.categorie;
+            document.getElementById('img-une').src = une.image_url;
+            document.getElementById('flash-alerte').innerText = "FLASH : " + une.titre;
         }
 
-        chargerContenu();
-    </script>
+        grille.innerHTML = "";
+        articles.slice(1, 7).forEach(art => {
+            grille.innerHTML += `
+                <div class="news-card">
+                    <a href="article.html?id=${art.id}" style="text-decoration:none; color:inherit;">
+                        <img src="${art.image_url}" alt="news">
+                        <h3>${art.titre}</h3>
+                    </a>
+                </div>
+            `;
+        });
+    }
+
+    async function chargerContenu() {
+        const { data: articles, error } = await _supabase
+            .from('articles')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (!error && articles) {
+            afficherArticles(articles);
+            const fil = document.getElementById('fil-info');
+            fil.innerHTML = "";
+            articles.forEach(art => {
+                const heure = new Date(art.created_at).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+                fil.innerHTML += `
+                    <div class="feed-item">
+                        <span class="feed-time">${heure}</span>
+                        <a href="article.html?id=${art.id}" style="text-decoration:none; color:inherit;"><p>${art.titre}</p></a>
+                    </div>
+                `;
+            });
+        }
+    }
+
+    async function filtrerParCategorie(maCategorie) {
+        const { data: articles, error } = await _supabase
+            .from('articles')
+            .select('*')
+            .eq('categorie', maCategorie)
+            .order('created_at', { ascending: false });
+
+        if (!error && articles) afficherArticles(articles);
+    }
+
+    chargerContenu();
+</script>
 </body>
 </html>
